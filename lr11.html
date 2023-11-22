@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Гра для вивчення мови</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(rgb(25, 0, 255), rgb(173, 12, 160), #032451);
+            font-family: 'Arial', sans-serif;
+            color: white;
+        }
+
+        #game-container {
+            text-align: center;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 80px;
+            border-radius: 40px;
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        #word-card {
+            font-size: 36px;
+            transition: font-size 0.5s ease-in-out;
+        }
+
+        input[type="text"] {
+            padding: 24px;
+            font-size: 24px;
+            margin-top: 30px;
+            border: none;
+            border-radius: 16px;
+            outline: none;
+        }
+
+        #check-btn {
+            padding: 16px 32px;
+            font-size: 24px;
+            cursor: pointer;
+            border: none;
+            border-radius: 16px;
+            background-color: #4caf50;
+            color: white;
+            transition: background-color 0.3s ease-in-out;
+        }
+
+        #check-btn:hover {
+            background-color: #45a049;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .correct,
+        .incorrect {
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .correct {
+            background-color: green;
+        }
+
+        .incorrect {
+            background-color: red;
+        }
+
+        #feedback {
+            margin-top: 20px;
+        }
+
+        #status {
+            font-size: 20px;
+            margin-top: 10px;
+        }
+
+        #correctness,
+        #answer-result {
+            font-size: 24px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="game-container">
+        <div id="word-card"></div>
+        <input type="text" id="translation-input" placeholder="Введіть переклад">
+        <button id="check-btn">Перевірити</button>
+        <div id="status"></div>
+        <div id="correctness" class="hidden"></div>
+        <div id="answer-result" class="hidden"></div>
+        <div id="feedback"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            const words = [
+                { word: "Парк", translation: "Park" },
+                { word: "Вечірка", translation: "Party" },
+                { word: "Магазин", translation: "Shop" },
+                { word: "Лікарня", translation: "Hospital" },
+                { word: "Відпочинок", translation: "Rest" },
+                { word: "Вибір", translation: "Choice" },
+                { word: "Готель", translation: "Hotel" },
+                { word: "Планета", translation: "Planet" },
+                { word: "Весілля", translation: "Wedding" },
+                { word: "Мрія", translation: "Dream" },
+            ];
+
+            let totalSteps = words.length;
+            let currentStep = 0;
+            let correctCount = 0;
+            let incorrectCount = 0;
+
+            // Shuffle function to randomize the order of words
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+
+            // Shuffle the words array
+            shuffleArray(words);
+
+            updateWordCard();
+
+            $("#check-btn").on("click", function () {
+                const userTranslation = $("#translation-input").val().trim().toLowerCase();
+                const correctTranslation = words[currentStep].translation.toLowerCase();
+
+                if (!userTranslation) {
+                    return;
+                }
+
+                let feedbackMessage, feedbackClass;
+
+                if (userTranslation == correctTranslation) {
+                    correctCount++;
+                    feedbackMessage = "Вірно!";
+                    feedbackClass = "correct";
+                } else {
+                    incorrectCount++;
+                    feedbackMessage = "Невірно.";
+                    feedbackClass = "incorrect";
+                }
+
+                displayFeedback(feedbackMessage, feedbackClass);
+
+                currentStep++;
+
+                if (currentStep < totalSteps) {
+                    updateWordCard();
+                } else {
+                    showResults();
+                }
+            });
+
+            function updateWordCard() {
+                $("#word-card").text(words[currentStep].word);
+                $("#translation-input").val("");
+                $("#status").text(`${currentStep + 1} / ${totalSteps}`);
+                $("#correctness").addClass("hidden");
+                $("#answer-result").addClass("hidden");
+            }
+
+            function displayFeedback(message, className) {
+                $("#feedback").html(`<p class="${className}">${message}</p>`);
+
+                setTimeout(() => $("#feedback").html(""), 1500);
+            }
+
+            function displayCorrectness(message, className) {
+                $("#correctness").removeClass("hidden").html(`<p class="${className}">${message}</p>`);
+            }
+
+            function displayAnswerResult(message) {
+                $("#answer-result").removeClass("hidden").html(`<p>${message}</p>`);
+            }
+
+            function showResults() {
+                const accuracy = (correctCount / totalSteps) * 100;
+                let level;
+
+                if (accuracy >= 80) {
+                    level = "Відмінно";
+                } else if (accuracy >= 60) {
+                    level = "Добре";
+                } else if (accuracy >= 40) {
+                    level = "Задовільно";
+                } else {
+                    level = "Слабко :(";
+                }
+
+                const resultMessage = `Гра завершена. Рівень знань: ${level}
+                    \nВірно перекладено: ${correctCount}
+                    \nНевірно перекладено: ${incorrectCount}`;
+
+                alert(resultMessage);
+            }
+        });
+    </script>
+</body>
+
+</html>
